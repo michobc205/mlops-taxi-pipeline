@@ -1,0 +1,54 @@
+name: Train model
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "data/*.dvc"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".github/workflows/train.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+      DEVELOPER: github-actions
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.13.5"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Train model
+        run: uv run python -m src.train
+
+      - name: Smoke test the API
+        run: uv run python -m src.check_api
+
+      - name: Show the saved files
+        run: ls -la models reports
+
+      - name: Report metrics
+        run: |
+          {
+            echo "## Training metrics"
+            echo "~~~json"
+            cat reports/train_metrics.json
+            echo
+            echo "~~~"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,14 @@
+.git/
+.github/
+.venv/
+**/.venv/
+.env
+**/.env
+**/__pycache__/
+data/
+models/
+mlruns/
+mlartifacts/
+*.db*
+monitoring/*.csv
+monitoring/reports/
